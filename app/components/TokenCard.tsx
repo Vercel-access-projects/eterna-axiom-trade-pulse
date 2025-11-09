@@ -1,28 +1,41 @@
 import React from 'react';
-import { ArrowUp, ArrowDown, Lock, MessageCircle, Users, Eye, Flame, Zap } from 'lucide-react';
 
-interface TokenCardProps {
+export interface TokenCardProps {
+  // Basic Info
   image: string;
   name: string;
-  ticker: string;
+  ticker?: string;
   timeAgo: string;
+  creator?: string;
+  
+  // Financial Data
   marketCap: string;
   volume: string;
   price: string;
-  holders: number;
-  replies: number;
-  freezeAuthority?: boolean;
-  mintAuthority?: boolean;
+  
+  // Liquidity & Transaction Info
   liquidity?: string;
-  percentages: {
-    change1h?: number;
-    change6h?: number;
-    change24h?: number;
-  };
-  badges?: Array<'king' | 'fire' | 'zap' | 'graduated'>;
-  verified?: boolean;
-  creator?: string;
+  liquidityRatio?: string;
   txCount?: number;
+  
+  // Token Stats
+  holders?: number;
+  replies?: number;
+  topHoldersRatio?: string; // e.g., "0/21"
+  
+  // Percentage Changes
+  change1h?: number;
+  change6h?: number;
+  change24h?: number;
+  timeLabel?: string; // e.g., "3mo", "2mo"
+  
+  // Status Badges
+  hasGraduated?: boolean;
+  hasBonding?: string; // e.g., "DS" for bonding status
+  
+  // Icons/Flags
+  isVerified?: boolean;
+  hasFlag?: boolean;
 }
 
 export default function TokenCard({
@@ -30,148 +43,128 @@ export default function TokenCard({
   name,
   ticker,
   timeAgo,
+  creator,
   marketCap,
   volume,
   price,
-  holders,
-  replies,
-  freezeAuthority,
-  mintAuthority,
   liquidity,
-  percentages,
-  badges = [],
-  verified,
-  creator,
-  txCount
+  liquidityRatio,
+  txCount,
+  holders = 0,
+  replies = 0,
+  topHoldersRatio,
+  change1h,
+  change6h,
+  change24h,
+  timeLabel,
+  hasGraduated,
+  hasBonding,
+  isVerified,
+  hasFlag
 }: TokenCardProps) {
-  const isPositive = (val?: number) => val !== undefined && val > 0;
-  const isNegative = (val?: number) => val !== undefined && val < 0;
-
   return (
-    <div className="bg-[#0f0f0f] border border-gray-800 rounded-lg p-4 hover:border-gray-700 transition-colors">
-      <div className="flex gap-3">
-        {/* Token Image */}
-        <div className="relative">
-          <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-800 flex-shrink-0">
+    <div className="bg-[#0f0f0f] border-b border-gray-800 hover:bg-[#141414] transition-colors">
+      <div className="flex gap-4 p-4">
+        {/* Token Image with border */}
+        <div className="relative flex-shrink-0">
+          <div className="w-[72px] h-[72px] border border-green-500 p-0.5 bg-black rounded">
             <img src={image} alt={name} className="w-full h-full object-cover" />
           </div>
-          {badges.includes('graduated') && (
-            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center border-2 border-[#0f0f0f]">
-              <span className="text-xs">✓</span>
+          {hasGraduated && (
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center border-2 border-[#0f0f0f]">
+              <span className="text-white text-xs">✓</span>
+            </div>
+          )}
+          {/* Creator under image */}
+          {creator && (
+            <div className="text-center text-xs text-gray-500 mt-1 truncate max-w-[72px]">
+              {creator}
             </div>
           )}
         </div>
 
         {/* Token Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between mb-2">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-white font-semibold text-base truncate">{name}</h3>
-                {verified && (
-                  <span className="text-gray-400 text-sm">{ticker}</span>
-                )}
-              </div>
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <span>{timeAgo}</span>
-                {freezeAuthority && (
-                  <span className="flex items-center gap-1">
-                    <Lock className="w-3 h-3" />
-                  </span>
-                )}
-                {mintAuthority && (
-                  <span>🔒</span>
-                )}
-                <span className="flex items-center gap-1">
-                  <MessageCircle className="w-3 h-3" />
-                  {replies}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Users className="w-3 h-3" />
-                  {holders}
-                </span>
-                {liquidity && (
-                  <span>💧{liquidity}</span>
-                )}
-              </div>
-            </div>
-            
-            {/* Market Cap and Volume */}
-            <div className="text-right ml-2">
-              <div className="text-xs text-gray-500 mb-0.5">
-                MC <span className="text-blue-400">{marketCap}</span>
-              </div>
-              <div className="text-xs text-gray-500">
-                V <span className="text-white">{volume}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Price and Stats */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {badges.map((badge, idx) => (
-                <span key={idx} className="text-yellow-500">
-                  {badge === 'king' && '👑'}
-                  {badge === 'fire' && '🔥'}
-                  {badge === 'zap' && '⚡'}
-                </span>
-              ))}
+        <div className="flex-1 min-w-0 flex flex-col justify-between">
+          {/* Top Section - Name and Market Cap */}
+          <div className="flex items-start justify-between">
+            <div className="flex items-baseline gap-2">
+              <h3 className="text-white font-bold text-xl">{name}</h3>
+              {ticker && <span className="text-gray-400 text-sm">{ticker}</span>}
+              {isVerified && <span className="text-gray-500">📋</span>}
             </div>
             
             <div className="text-right">
-              <div className="text-green-400 text-sm font-medium mb-1">${price}</div>
-              {txCount && (
-                <div className="flex items-center gap-1 text-xs text-gray-500">
-                  <span>F ≡ {liquidity}</span>
-                  <span>TX {txCount}</span>
-                </div>
-              )}
+              <div className="text-xs text-gray-500">
+                MC <span className="text-cyan-400 font-semibold">{marketCap}</span>
+              </div>
+              <div className="text-xs text-gray-500">
+                V <span className="text-white font-semibold">{volume}</span>
+              </div>
             </div>
           </div>
 
-          {/* Percentage Changes */}
-          <div className="flex items-center gap-3 mt-3 text-xs">
-            {percentages.change1h !== undefined && (
-              <div className={`flex items-center gap-1 ${isPositive(percentages.change1h) ? 'text-green-500' : isNegative(percentages.change1h) ? 'text-red-500' : 'text-gray-500'}`}>
-                {isPositive(percentages.change1h) && <ArrowUp className="w-3 h-3" />}
-                {isNegative(percentages.change1h) && <ArrowDown className="w-3 h-3" />}
-                <span>{Math.abs(percentages.change1h)}%</span>
-              </div>
-            )}
-            {percentages.change6h !== undefined && (
-              <div className={`flex items-center gap-1 ${isPositive(percentages.change6h) ? 'text-green-500' : isNegative(percentages.change6h) ? 'text-red-500' : 'text-gray-500'}`}>
-                {isPositive(percentages.change6h) && <ArrowUp className="w-3 h-3" />}
-                {isNegative(percentages.change6h) && <ArrowDown className="w-3 h-3" />}
-                <span>{Math.abs(percentages.change6h)}% 6d</span>
-              </div>
-            )}
-            {percentages.change24h !== undefined && (
-              <div className={`flex items-center gap-1 ${isPositive(percentages.change24h) ? 'text-green-500' : isNegative(percentages.change24h) ? 'text-red-500' : 'text-gray-500'}`}>
-                {isPositive(percentages.change24h) && <ArrowUp className="w-3 h-3" />}
-                {isNegative(percentages.change24h) && <ArrowDown className="w-3 h-3" />}
-                <span>{Math.abs(percentages.change24h)}%</span>
-              </div>
-            )}
-            <div className="flex items-center gap-1 text-green-500">
-              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-              <span>0%</span>
+          {/* Middle Section - Time, Icons, Stats */}
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex items-center gap-3 text-sm">
+              <span className="text-green-400">{timeAgo}</span>
+              {hasFlag && <span className="text-red-500">🚩</span>}
+              <span className="text-gray-500">💊</span>
+              <span className="text-gray-500">🔍</span>
+              <span className="text-gray-500 flex items-center gap-1">
+                👥 <span className="text-white">{holders}</span>
+              </span>
+              <span className="text-gray-500 flex items-center gap-1">
+                ⚖️ <span className="text-white">{replies}</span>
+              </span>
+              <span className="text-gray-500 flex items-center gap-1">
+                👑 <span className="text-white">{topHoldersRatio || '0/21'}</span>
+              </span>
             </div>
+            
+            <div className="text-right">
+              <div className="flex items-center justify-end gap-2 text-xs text-gray-500">
+                <span>F</span>
+                <span className="text-cyan-400">≡</span>
+                <span className="text-white">{liquidity || '0.0₂5'}</span>
+                <span>TX {txCount || 8}</span>
+                <div className="w-8 h-1 bg-gradient-to-r from-red-500 to-green-500"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Section - Stats */}
+          <div className="flex items-center gap-4 mt-2 text-sm">
+            {change1h !== undefined && (
+              <div className={`flex items-center gap-1 ${change1h > 0 ? 'text-green-500' : change1h < 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                <span className="text-green-500">👤</span>
+                <span className="font-semibold">{Math.abs(change1h)}%</span>
+              </div>
+            )}
+            {hasBonding && (
+              <div className="flex items-center gap-1 text-blue-500">
+                <span>👨‍🍳</span>
+                <span className="font-semibold">{hasBonding}</span>
+                {timeLabel && <span className="text-yellow-400">◆</span>}
+                {timeLabel && <span className="font-semibold">{timeLabel}</span>}
+              </div>
+            )}
+            {change6h !== undefined && (
+              <div className={`flex items-center gap-1 ${change6h > 0 ? 'text-green-500' : change6h < 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                <span>🎯</span>
+                <span className="font-semibold">{Math.abs(change6h)}%</span>
+              </div>
+            )}
+            {change24h !== undefined && (
+              <div className={`flex items-center gap-1 ${change24h > 0 ? 'text-green-500' : change24h < 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                <span>👻</span>
+                <span className="font-semibold">{Math.abs(change24h)}%</span>
+              </div>
+            )}
             <div className="flex items-center gap-1 text-gray-500">
-              <span>🔒 0%</span>
-            </div>
-            <div className="flex items-center gap-1 text-green-500">
-              <Users className="w-3 h-3" />
-              <span>0%</span>
+              <span>☣️</span>
+              <span className="font-semibold">0%</span>
             </div>
           </div>
-
-          {/* Creator Info */}
-          {creator && (
-            <div className="mt-2 text-xs text-gray-500">
-              {creator}
-            </div>
-          )}
         </div>
       </div>
     </div>
