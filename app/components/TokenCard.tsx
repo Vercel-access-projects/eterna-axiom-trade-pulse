@@ -1,4 +1,5 @@
 import React from 'react';
+import SolanaIcon from './SolanaIcon';
 
 export interface TokenCardProps {
     // Basic Info
@@ -141,7 +142,7 @@ export default function TokenCard({
                         <div className="text-right">
                             <div className="flex items-center justify-end gap-2 text-xs text-gray-500">
                                 <span>F</span>
-                                <span className="text-cyan-400">≡</span>
+                                <SolanaIcon size={10} className="text-cyan-400" />
                                 <span className="text-white">{liquidity || '0.0₂5'}</span>
                                 <span>TX {txCount || 8}</span>
                                 <div className="w-8 h-1 bg-gradient-to-r from-red-500 to-green-500"></div>

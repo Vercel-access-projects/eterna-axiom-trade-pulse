@@ -1,54 +1,269 @@
-import React from 'react';
-import { Zap, BarChart3, HelpCircle, Grid3x3, TableProperties } from 'lucide-react';
-import TokenCard from './TokenCard';
+'use client';
+
+import React, { useState, useMemo } from 'react';
+import { Zap, ArrowUpDown, Clock, DollarSign, TrendingUp, Users, BarChart3, Grid3x3, TableProperties, Menu, Plus, Filter, SlidersHorizontal } from 'lucide-react';
+import EnhancedTokenCard from './EnhancedTokenCard';
+import { TokenCardSkeleton } from './Skeleton';
+import ErrorBoundary from './ErrorBoundary';
+import Tooltip from './Tooltip';
+import Popover from './Popover';
+import SolanaIcon from './SolanaIcon';
+
+type SortOption = 'time' | 'marketCap' | 'volume' | 'holders' | 'change1h' | 'change24h';
+type SortDirection = 'asc' | 'desc';
 
 interface ColumnProps {
   title: string;
   count: number;
   badges?: string[];
   tokens: any[];
+  isLoading?: boolean;
+  columnType: 'new-pairs' | 'final-stretch' | 'migrated';
 }
 
-function Column({ title, count, badges = [], tokens }: ColumnProps) {
+function Column({ title, count, badges = [], tokens, isLoading = false, columnType }: ColumnProps) {
+  const [sortBy, setSortBy] = useState<SortOption>('time');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  const sortedTokens = useMemo(() => {
+    const sorted = [...tokens].sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortBy) {
+        case 'time':
+          const parseTime = (time: string) => {
+            const num = parseInt(time);
+            if (time.includes('s')) return num;
+            if (time.includes('m')) return num * 60;
+            if (time.includes('h')) return num * 3600;
+            if (time.includes('d')) return num * 86400;
+            return 0;
+          };
+          aValue = parseTime(a.timeAgo);
+          bValue = parseTime(b.timeAgo);
+          break;
+
+        case 'marketCap':
+          const parseMC = (mc: string) => {
+            const num = parseFloat(mc.replace(/[$,K]/g, ''));
+            if (mc.includes('M')) return num * 1000000;
+            if (mc.includes('K')) return num * 1000;
+            return num;
+          };
+          aValue = parseMC(a.marketCap);
+          bValue = parseMC(b.marketCap);
+          break;
+
+        case 'volume':
+          const parseVol = (vol: string) => {
+            const num = parseFloat(vol.replace(/[$,K]/g, ''));
+            if (vol.includes('M')) return num * 1000000;
+            if (vol.includes('K')) return num * 1000;
+            return num;
+          };
+          aValue = parseVol(a.volume);
+          bValue = parseVol(b.volume);
+          break;
+
+        case 'holders':
+          aValue = a.holders || 0;
+          bValue = b.holders || 0;
+          break;
+
+        case 'change1h':
+          aValue = a.change1h || 0;
+          bValue = b.change1h || 0;
+          break;
+
+        case 'change24h':
+          aValue = a.change24h || 0;
+          bValue = b.change24h || 0;
+          break;
+
+        default:
+          return 0;
+      }
+
+      if (sortDirection === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+
+    return sorted;
+  }, [tokens, sortBy, sortDirection]);
+
+  const handleSort = (option: SortOption) => {
+    if (sortBy === option) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(option);
+      setSortDirection('desc');
+    }
+  };
   return (
     <div className="flex-1 min-w-0 flex flex-col border-r border-gray-800 last:border-r-0">
       {/* Column Header - Fixed */}
-      <div className="flex-shrink-0 px-4 py-3 border-b border-gray-800">
-        <div className="flex items-center justify-between">
+      <div className="flex-shrink-0 px-4 py-3 border-b border-gray-800 relative">
+        {/* Loading shimmer overlay */}
+        {isLoading && (
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-500/10 to-transparent animate-shimmer" />
+        )}
+        
+        <div className="flex items-center justify-between gap-3 relative z-10">
+          {/* Left side - Title */}
           <div className="flex items-center gap-2">
             <h2 className="text-white font-semibold text-lg">{title}</h2>
           </div>
+          
+          {/* Right side - Controls */}
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-[#1a1a1a] border border-gray-700 rounded-full">
-              <Zap className="w-4 h-4 text-gray-400" />
-              <span className="text-white text-sm">{count}</span>
+            {/* Main pill container - transparent background with 2 sections */}
+            <div className="flex items-center border border-gray-700 rounded-full overflow-hidden hover:bg-gray-800/30 transition-colors">
+              {/* Left section - Count and Sort */}
+              <div className="flex items-center gap-3 px-3 py-1.5">
+                {/* Count with icon */}
+                <div className="flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-gray-400" />
+                  <span className="text-white text-sm">{count}</span>
+                </div>
+                
+                {/* Sort Button with Popover */}
+                <Popover
+                  trigger={
+                    <div className="cursor-pointer hover:opacity-80 transition-opacity">
+                      <Tooltip content="Sort tokens">
+                        <SolanaIcon size={14} className="text-blue-500" />
+                      </Tooltip>
+                    </div>
+                  }
+                  position="bottom"
+                >
+                  <div className="py-2 w-48">
+                    <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase">Sort by</div>
+                    {[
+                      { value: 'time' as SortOption, label: 'Time', icon: <Clock className="w-3 h-3" /> },
+                      { value: 'marketCap' as SortOption, label: 'Market Cap', icon: <DollarSign className="w-3 h-3" /> },
+                      { value: 'volume' as SortOption, label: 'Volume', icon: <TrendingUp className="w-3 h-3" /> },
+                      { value: 'holders' as SortOption, label: 'Holders', icon: <Users className="w-3 h-3" /> },
+                      { value: 'change1h' as SortOption, label: '1h Change', icon: <ArrowUpDown className="w-3 h-3" /> },
+                      { value: 'change24h' as SortOption, label: '24h Change', icon: <ArrowUpDown className="w-3 h-3" /> },
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => handleSort(option.value)}
+                        className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-800 transition-colors flex items-center justify-between ${
+                          sortBy === option.value ? 'text-cyan-400' : 'text-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          {option.icon}
+                          <span>{option.label}</span>
+                        </div>
+                        {sortBy === option.value && (
+                          <span className="text-xs">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </Popover>
+              </div>
+
+              {/* Vertical divider */}
+              <div className="h-6 w-px bg-gray-700"></div>
+
+              {/* Right section - Priority badges */}
+              <div className="flex items-center gap-2 px-3 py-1.5">
+                <Tooltip content="Priority 1">
+                  <span className="text-blue-500 text-sm font-semibold cursor-pointer hover:text-cyan-400 transition-colors">P1</span>
+                </Tooltip>
+                <Tooltip content="Priority 2">
+                  <span className="text-gray-400 text-sm font-semibold cursor-pointer hover:text-cyan-400 transition-colors">P2</span>
+                </Tooltip>
+                <Tooltip content="Priority 3">
+                  <span className="text-gray-400 text-sm font-semibold cursor-pointer hover:text-cyan-400 transition-colors">P3</span>
+                </Tooltip>
+              </div>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-[#1a1a1a] border border-gray-700 rounded-full">
-              <span className="text-blue-500 text-sm">≡</span>
-            </div>
-            <div className="flex items-center gap-1 px-3 py-1.5 bg-[#1a1a1a] border border-gray-700 rounded-full">
-              <span className="text-blue-500 text-sm font-semibold">P1</span>
-              <span className="text-gray-400 text-sm font-semibold">P2</span>
-              <span className="text-gray-400 text-sm font-semibold">P3</span>
-            </div>
-            <button className="p-1.5 hover:bg-gray-800 rounded">
-              <span className="text-gray-400 text-sm">⚡</span>
-            </button>
+
+            {/* Filter button - OUTSIDE the pill */}
+            <Tooltip content="Filter tokens">
+              <button className="p-2 hover:bg-gray-800 rounded-lg transition-colors">
+                <SlidersHorizontal className="w-4 h-4 text-gray-400" />
+              </button>
+            </Tooltip>
           </div>
         </div>
       </div>
 
       {/* Token Cards - Scrollable */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-800 scrollbar-track-transparent">
-        {tokens.map((token, idx) => (
-          <TokenCard key={idx} {...token} />
-        ))}
+        <ErrorBoundary>
+          {isLoading ? (
+            <>
+              {Array.from({ length: 5 }).map((_, idx) => (
+                <div 
+                  key={idx}
+                  className="progressive-load"
+                  style={{ animationDelay: `${idx * 0.1}s` }}
+                >
+                  <TokenCardSkeleton />
+                </div>
+              ))}
+            </>
+          ) : (
+            sortedTokens.map((token, idx) => (
+              <div
+                key={`${token.name}-${idx}`}
+                className="progressive-load"
+                style={{ animationDelay: `${idx * 0.05}s` }}
+              >
+                <EnhancedTokenCard 
+                  tokenId={`${token.name.toLowerCase()}-${idx}`}
+                  columnType={columnType}
+                  {...token} 
+                />
+              </div>
+            ))
+          )}
+        </ErrorBoundary>
       </div>
     </div>
   );
 }
 
 export default function PulseContent() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+
+  // Simulate progressive loading
+  React.useEffect(() => {
+    setIsLoading(true);
+    setLoadingProgress(0);
+    
+    // Progressive loading animation
+    const progressInterval = setInterval(() => {
+      setLoadingProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(progressInterval);
+          return 100;
+        }
+        return prev + 10;
+      });
+    }, 150);
+
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+    
+    return () => {
+      clearTimeout(timer);
+      clearInterval(progressInterval);
+    };
+  }, []);
+
   const newPairsTokens = [
     {
       image: 'https://picsum.photos/seed/pcc1/80/80',
@@ -58,8 +273,8 @@ export default function PulseContent() {
       marketCap: '$4.84K',
       volume: '$477',
       price: '477',
-      liquidity: '0.0₂5',
-      liquidityRatio: '0.0₂5',
+      liquidity: '0.025',
+      liquidityRatio: '0.025',
       txCount: 8,
       holders: 1,
       replies: 0,
@@ -81,7 +296,7 @@ export default function PulseContent() {
       marketCap: '$145K',
       volume: '$7K',
       price: '7K',
-      liquidity: '0.0₂2',
+      liquidity: '0.022',
       liquidityRatio: '224/248',
       txCount: 64,
       holders: 47,
@@ -101,7 +316,7 @@ export default function PulseContent() {
       marketCap: '$335K',
       volume: '$13K',
       price: '13K',
-      liquidity: '0.0₂4',
+      liquidity: '0.024',
       liquidityRatio: '10/11',
       txCount: 122,
       holders: 107,
@@ -159,7 +374,7 @@ export default function PulseContent() {
       marketCap: '$12.3K',
       volume: '$890',
       price: '890',
-      liquidity: '0.0₂8',
+      liquidity: '0.028',
       liquidityRatio: '12/50',
       txCount: 15,
       holders: 8,
@@ -178,7 +393,7 @@ export default function PulseContent() {
       marketCap: '$234K',
       volume: '$18K',
       price: '18K',
-      liquidity: '0.0₂3',
+      liquidity: '0.023',
       liquidityRatio: '156/200',
       txCount: 89,
       holders: 134,
@@ -199,7 +414,7 @@ export default function PulseContent() {
       marketCap: '$67K',
       volume: '$3.4K',
       price: '3.4K',
-      liquidity: '0.0₂6',
+      liquidity: '0.026',
       liquidityRatio: '78/150',
       txCount: 42,
       holders: 56,
@@ -218,7 +433,7 @@ export default function PulseContent() {
       marketCap: '$156K',
       volume: '$9.8K',
       price: '9.8K',
-      liquidity: '0.0₂1',
+      liquidity: '0.021',
       liquidityRatio: '234/300',
       txCount: 67,
       holders: 89,
@@ -238,7 +453,7 @@ export default function PulseContent() {
       marketCap: '$445K',
       volume: '$28K',
       price: '28K',
-      liquidity: '0.0₁9',
+      liquidity: '0.019',
       liquidityRatio: '567/600',
       txCount: 156,
       holders: 234,
@@ -262,7 +477,7 @@ export default function PulseContent() {
       marketCap: '$27.4K',
       volume: '$14K',
       price: '14K',
-      liquidity: '0.0₂5',
+      liquidity: '0.025',
       liquidityRatio: '0/13',
       txCount: 2,
       holders: 1,
@@ -282,7 +497,7 @@ export default function PulseContent() {
       marketCap: '$4.83K',
       volume: '$12K',
       price: '12K',
-      liquidity: '0.0₂2',
+      liquidity: '0.022',
       liquidityRatio: '0/1',
       txCount: 2,
       holders: 203,
@@ -301,7 +516,7 @@ export default function PulseContent() {
       marketCap: '$335K',
       volume: '$23K',
       price: '23K',
-      liquidity: '0.0₂4',
+      liquidity: '0.024',
       liquidityRatio: '20/21',
       txCount: 5,
       holders: 3,
@@ -321,7 +536,7 @@ export default function PulseContent() {
       marketCap: '$189K',
       volume: '$16K',
       price: '16K',
-      liquidity: '0.0₂7',
+      liquidity: '0.027',
       liquidityRatio: '15/18',
       txCount: 8,
       holders: 12,
@@ -341,7 +556,7 @@ export default function PulseContent() {
       marketCap: '$567K',
       volume: '$45K',
       price: '45K',
-      liquidity: '0.0₁8',
+      liquidity: '0.018',
       liquidityRatio: '34/35',
       txCount: 12,
       holders: 45,
@@ -362,7 +577,7 @@ export default function PulseContent() {
       marketCap: '$234K',
       volume: '$19K',
       price: '19K',
-      liquidity: '0.0₂3',
+      liquidity: '0.023',
       liquidityRatio: '22/25',
       txCount: 6,
       holders: 28,
@@ -382,7 +597,7 @@ export default function PulseContent() {
       marketCap: '$890K',
       volume: '$67K',
       price: '67K',
-      liquidity: '0.0₁5',
+      liquidity: '0.015',
       liquidityRatio: '45/48',
       txCount: 18,
       holders: 89,
@@ -403,7 +618,7 @@ export default function PulseContent() {
       marketCap: '$445K',
       volume: '$34K',
       price: '34K',
-      liquidity: '0.0₂1',
+      liquidity: '0.021',
       liquidityRatio: '28/30',
       txCount: 9,
       holders: 56,
@@ -423,7 +638,7 @@ export default function PulseContent() {
       marketCap: '$678K',
       volume: '$52K',
       price: '52K',
-      liquidity: '0.0₁7',
+      liquidity: '0.017',
       liquidityRatio: '38/40',
       txCount: 15,
       holders: 123,
@@ -444,7 +659,7 @@ export default function PulseContent() {
       marketCap: '$312K',
       volume: '$26K',
       price: '26K',
-      liquidity: '0.0₂2',
+      liquidity: '0.022',
       liquidityRatio: '25/28',
       txCount: 7,
       holders: 67,
@@ -467,7 +682,7 @@ export default function PulseContent() {
       marketCap: '$276K',
       volume: '$14K',
       price: '14K',
-      liquidity: '0.0₂1',
+      liquidity: '0.021',
       liquidityRatio: '1/1',
       txCount: 11,
       holders: 7,
@@ -508,7 +723,7 @@ export default function PulseContent() {
       marketCap: '$42.3K',
       volume: '$11K',
       price: '11K',
-      liquidity: '0.0₁7',
+      liquidity: '0.017',
       liquidityRatio: '1/1',
       txCount: 129,
       holders: 142,
@@ -529,7 +744,7 @@ export default function PulseContent() {
       marketCap: '$1.16M',
       volume: '$27K',
       price: '27K',
-      liquidity: '0.0₁4',
+      liquidity: '0.014',
       liquidityRatio: '174/183',
       txCount: 282,
       holders: 136,
@@ -570,7 +785,7 @@ export default function PulseContent() {
       marketCap: '$31.9K',
       volume: '$16K',
       price: '16K',
-      liquidity: '0.0₂2',
+      liquidity: '0.022',
       liquidityRatio: '26/126',
       txCount: 65,
       holders: 150,
@@ -591,7 +806,7 @@ export default function PulseContent() {
       marketCap: '$567K',
       volume: '$45K',
       price: '45K',
-      liquidity: '0.0₁8',
+      liquidity: '0.018',
       liquidityRatio: '1/1',
       txCount: 234,
       holders: 189,
@@ -612,7 +827,7 @@ export default function PulseContent() {
       marketCap: '$892K',
       volume: '$67K',
       price: '67K',
-      liquidity: '0.0₁3',
+      liquidity: '0.013',
       liquidityRatio: '1/1',
       txCount: 456,
       holders: 234,
@@ -633,7 +848,7 @@ export default function PulseContent() {
       marketCap: '$1.23M',
       volume: '$89K',
       price: '89K',
-      liquidity: '0.0₁1',
+      liquidity: '0.011',
       liquidityRatio: '1/1',
       txCount: 567,
       holders: 345,
@@ -654,7 +869,7 @@ export default function PulseContent() {
       marketCap: '$445K',
       volume: '$38K',
       price: '38K',
-      liquidity: '0.0₁6',
+      liquidity: '0.016',
       liquidityRatio: '1/1',
       txCount: 198,
       holders: 167,
@@ -671,6 +886,16 @@ export default function PulseContent() {
 
   return (
     <div className="fixed top-[60px] bottom-[60px] left-0 right-0 flex flex-col">
+      {/* Loading Progress Bar */}
+      {isLoading && (
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gray-900 z-50">
+          <div 
+            className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 transition-all duration-300 ease-out"
+            style={{ width: `${loadingProgress}%` }}
+          />
+        </div>
+      )}
+      
       {/* Page Header - Fixed */}
       {/* <div className="flex-shrink-0 px-6 py-4 border-b border-gray-800 bg-[#0a0a0a]"> */}
       <div className="flex-shrink-0 px-6 py-4  bg-[#0a0a0a]">
@@ -678,7 +903,7 @@ export default function PulseContent() {
           <div className="flex items-center gap-4">
             <h1 className="text-white text-2xl font-bold flex items-center gap-2">
               Pulse
-              <span className="text-blue-500">≡</span>
+              <SolanaIcon size={20} className="text-purple-500" />
               {/* <span className="text-yellow-500">🎁</span> */}
             </h1>
             {/* <button className="p-2 hover:bg-gray-800 rounded-lg transition-colors">
@@ -705,7 +930,7 @@ export default function PulseContent() {
             </button>
             <div className="flex items-center gap-1 px-3 py-2 bg-gray-800 rounded-lg">
               <span className="text-white text-sm">1</span>
-              <span className="text-blue-500 text-sm">≡</span>
+              <SolanaIcon size={12} className="text-purple-500" />
               <span className="text-white text-sm">0</span>
             </div>
           </div>
@@ -714,9 +939,30 @@ export default function PulseContent() {
 
       {/* Three Column Layout - Scrollable */}
       <div className="flex-1 flex mx-6 mb-4 border border-gray-800 overflow-hidden rounded">
-        <Column title="New Pairs" count={0} badges={['≡', 'P1', 'P2', 'P3', '⚡']} tokens={newPairsTokens} />
-        <Column title="Final Stretch" count={0} badges={['≡', 'P1', 'P2', 'P3', '⚡']} tokens={finalStretchTokens} />
-        <Column title="Migrated" count={0} badges={['≡', 'P1', 'P2', 'P3', '⚡']} tokens={migratedTokens} />
+        <Column 
+          title="New Pairs" 
+          count={newPairsTokens.length} 
+          badges={['SOL', 'P1', 'P2', 'P3', '⚡']} 
+          tokens={newPairsTokens} 
+          isLoading={isLoading}
+          columnType="new-pairs"
+        />
+        <Column 
+          title="Final Stretch" 
+          count={finalStretchTokens.length} 
+          badges={['SOL', 'P1', 'P2', 'P3', '⚡']} 
+          tokens={finalStretchTokens} 
+          isLoading={isLoading}
+          columnType="final-stretch"
+        />
+        <Column 
+          title="Migrated" 
+          count={migratedTokens.length} 
+          badges={['SOL', 'P1', 'P2', 'P3', '⚡']} 
+          tokens={migratedTokens} 
+          isLoading={isLoading}
+          columnType="migrated"
+        />
       </div>
     </div>
   );

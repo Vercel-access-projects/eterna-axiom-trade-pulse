@@ -1,5 +1,6 @@
 import React from 'react';
 import { Wallet, Twitter, MessageCircle, BarChart2, FileText, MessageSquare } from 'lucide-react';
+import SolanaIcon from './SolanaIcon';
 
 export default function BottomBar() {
   return (
@@ -15,7 +16,7 @@ export default function BottomBar() {
           <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-800/50 rounded">
             <span className="text-sm text-gray-400">💼</span>
             <span className="text-sm text-white">1</span>
-            <span className="text-blue-500">≡</span>
+            <SolanaIcon size={12} className="text-purple-500" />
             <span className="text-sm text-white">0</span>
           </div>
 
@@ -58,7 +59,7 @@ export default function BottomBar() {
         {/* Right side - Global Stats and Actions */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 px-3 py-1.5">
-            <span className="text-sm text-gray-400">≡</span>
+            <SolanaIcon size={14} className="text-purple-500" />
             <span className="text-sm text-green-500">$161.28</span>
           </div>
 

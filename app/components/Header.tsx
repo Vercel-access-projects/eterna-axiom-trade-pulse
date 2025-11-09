@@ -1,5 +1,8 @@
+'use client';
+
 import React from 'react';
 import { Bell, Mail, Search, Star, User } from 'lucide-react';
+import SolanaIcon from './SolanaIcon';
 
 export default function Header() {
   return (
@@ -53,7 +56,7 @@ export default function Header() {
           </button>
           
           <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-800/50 rounded-lg cursor-pointer hover:bg-gray-800 transition-colors">
-            <span className="text-xs text-gray-400">≡</span>
+            <SolanaIcon size={14} className="text-purple-500" />
             <span className="text-sm text-white">SOL</span>
             <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
