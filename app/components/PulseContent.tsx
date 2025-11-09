@@ -672,17 +672,18 @@ export default function PulseContent() {
   return (
     <div className="fixed top-[60px] bottom-[60px] left-0 right-0 flex flex-col">
       {/* Page Header - Fixed */}
-      <div className="flex-shrink-0 px-6 py-4 border-b border-gray-800 bg-[#0a0a0a]">
+      {/* <div className="flex-shrink-0 px-6 py-4 border-b border-gray-800 bg-[#0a0a0a]"> */}
+      <div className="flex-shrink-0 px-6 py-4  bg-[#0a0a0a]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <h1 className="text-white text-2xl font-bold flex items-center gap-2">
               Pulse
               <span className="text-blue-500">≡</span>
-              <span className="text-yellow-500">🎁</span>
+              {/* <span className="text-yellow-500">🎁</span> */}
             </h1>
-            <button className="p-2 hover:bg-gray-800 rounded-lg transition-colors">
+            {/* <button className="p-2 hover:bg-gray-800 rounded-lg transition-colors">
               <HelpCircle className="w-5 h-5 text-gray-400" />
-            </button>
+            </button> */}
           </div>
 
           <div className="flex items-center gap-3">
@@ -712,7 +713,7 @@ export default function PulseContent() {
       </div>
 
       {/* Three Column Layout - Scrollable */}
-      <div className="flex-1 flex mx-6 mb-4 border border-gray-800 overflow-hidden">
+      <div className="flex-1 flex mx-6 mb-4 border border-gray-800 overflow-hidden rounded">
         <Column title="New Pairs" count={0} badges={['≡', 'P1', 'P2', 'P3', '⚡']} tokens={newPairsTokens} />
         <Column title="Final Stretch" count={0} badges={['≡', 'P1', 'P2', 'P3', '⚡']} tokens={finalStretchTokens} />
         <Column title="Migrated" count={0} badges={['≡', 'P1', 'P2', 'P3', '⚡']} tokens={migratedTokens} />

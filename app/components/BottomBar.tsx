@@ -4,7 +4,7 @@ import { Wallet, Twitter, MessageCircle, BarChart2, FileText, MessageSquare } fr
 export default function BottomBar() {
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-[#0a0a0a] border-t border-gray-800 z-50">
-      <div className="flex items-center justify-between px-6 py-3">
+      <div className="flex items-center justify-between px-6">
         {/* Left side - Presets and Stats */}
         <div className="flex items-center gap-4">
           <button className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors flex items-center gap-2">

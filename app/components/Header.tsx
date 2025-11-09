@@ -23,7 +23,7 @@ export default function Header() {
             </a>
             <a href="#" className="text-blue-500 font-medium text-sm flex items-center gap-1">
               Pulse
-              <span className="text-xs bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded">≡</span>
+              {/* <span className="text-xs bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded">≡</span> */}
             </a>
             <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">
               Trackers
